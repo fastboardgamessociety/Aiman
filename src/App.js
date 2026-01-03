@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import NewYearPage from './components/NewYearPage';
-import NewYearCelebration from './components/NewYearCelebration';
+import BirthdayCountdown from './components/BirthdayCountdown';
+import BirthdayCelebration from './components/BirthdayCelebration';
+import BirthdayGallery from './components/BirthdayGallery';
+import InteractiveGames from './components/InteractiveGames';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -11,26 +13,37 @@ const AppContainer = styled.div`
 `;
 
 function App() {
-  const [currentStep, setCurrentStep] = useState('newYearCountdown');
+  const [currentStep, setCurrentStep] = useState('birthdayCountdown');
 
-  const handleNewYearComplete = () => {
-    setCurrentStep('newYearCelebration');
+  const handleBirthdayCountdownComplete = () => {
+    setCurrentStep('birthdayCelebration');
   };
 
-  const handleNewYearCelebrationComplete = () => {
-    // For now, just stay on celebration
-    // Later we'll add birthday content
-    console.log('New Year celebration complete!');
+  const handleBirthdayCelebrationComplete = () => {
+    setCurrentStep('birthdayGallery');
+  };
+
+  const handleBirthdayGalleryComplete = () => {
+    setCurrentStep('interactiveGames');
+  };
+
+  const handleGamesComplete = () => {
+    // Stay on games or loop back
+    console.log('Birthday experience complete!');
   };
 
   const renderCurrentStep = () => {
     switch (currentStep) {
-      case 'newYearCountdown':
-        return <NewYearPage onComplete={handleNewYearComplete} />;
-      case 'newYearCelebration':
-        return <NewYearCelebration onClose={handleNewYearCelebrationComplete} />;
+      case 'birthdayCountdown':
+        return <BirthdayCountdown onComplete={handleBirthdayCountdownComplete} />;
+      case 'birthdayCelebration':
+        return <BirthdayCelebration onComplete={handleBirthdayCelebrationComplete} />;
+      case 'birthdayGallery':
+        return <BirthdayGallery onComplete={handleBirthdayGalleryComplete} />;
+      case 'interactiveGames':
+        return <InteractiveGames onComplete={handleGamesComplete} />;
       default:
-        return <NewYearPage onComplete={handleNewYearComplete} />;
+        return <BirthdayCountdown onComplete={handleBirthdayCountdownComplete} />;
     }
   };
 

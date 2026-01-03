@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import Confetti from 'react-confetti';
+import * as THREE from 'three';
 
 const float = keyframes`
   0% { transform: translateY(0px) rotate(0deg); }
@@ -58,11 +59,22 @@ const CelebrationContainer = styled(motion.div)`
   overflow: hidden;
 `;
 
+const Canvas3D = styled.canvas`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+`;
+
 const MagicalBackground = styled.div`
   position: absolute;
   width: 100%;
   height: 100%;
   pointer-events: none;
+  z-index: 2;
 `;
 
 const SparkleRain = styled.div`
@@ -164,24 +176,6 @@ const BouncingElement = styled(motion.div)`
   z-index: 5;
 `;
 
-const CloseButton = styled(motion.button)`
-  background: linear-gradient(45deg, #ff69b4, #ff1493);
-  color: white;
-  border: none;
-  padding: 20px 40px;
-  border-radius: 30px;
-  font-size: 1.3rem;
-  cursor: pointer;
-  font-weight: 700;
-  box-shadow: 0 10px 30px rgba(255, 105, 180, 0.4);
-  z-index: 10;
-  
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 40px rgba(255, 105, 180, 0.6);
-  }
-`;
-
 const MagicWand = styled(motion.div)`
   position: absolute;
   font-size: 3rem;
@@ -190,12 +184,39 @@ const MagicWand = styled(motion.div)`
   z-index: 8;
 `;
 
+const NavigationButtons = styled(motion.div)`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  z-index: 10;
+  margin-top: 2rem;
+`;
+
+const NavButton = styled(motion.button)`
+  background: linear-gradient(45deg, #ff69b4, #ff1493);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(255, 105, 180, 0.4);
+  
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(255, 105, 180, 0.6);
+  }
+`;
+
 const sparkleEmojis = ['✨', '⭐', '🌟', '💫', '🔮'];
 const balloonEmojis = ['🎈', '🎀', '🌸', '🦋', '💖', '🌺'];
 const celebrationEmojis = ['🎉', '🎊', '💕', '💖', '🌈', '🦄', '👑', '💎'];
 const floatingEmojis = ['🌸', '🌺', '🌻', '🌷', '🌹', '💐'];
 
-function BirthdayCelebration({ onClose }) {
+function BirthdayCelebration({ onComplete }) {
+  const canvasRef = useRef(null);
   const [sparkleRaindrops, setSparkleRaindrops] = useState([]);
   const [floatingBalloons, setFloatingBalloons] = useState([]);
   const [hearts, setHearts] = useState([]);
@@ -204,6 +225,173 @@ function BirthdayCelebration({ onClose }) {
   const [magicWands, setMagicWands] = useState([]);
 
   useEffect(() => {
+    // Three.js setup
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    camera.position.z = 5;
+
+    // Create multiple heart geometries with particles
+    const heartParticles = [];
+    const heartGeometry = new THREE.SphereGeometry(0.05, 8, 8);
+
+    for (let i = 0; i < 200; i++) {
+      const material = new THREE.MeshPhongMaterial({
+        color: new THREE.Color().setHSL(Math.random() * 0.1 + 0.9, 1, 0.6),
+        emissive: new THREE.Color().setHSL(Math.random() * 0.1 + 0.9, 1, 0.3),
+        transparent: true,
+        opacity: 0.8
+      });
+
+      const heart = new THREE.Mesh(heartGeometry, material);
+      heart.position.set(
+        (Math.random() - 0.5) * 10,
+        (Math.random() - 0.5) * 10,
+        (Math.random() - 0.5) * 10
+      );
+
+      heart.userData = {
+        velocity: new THREE.Vector3(
+          (Math.random() - 0.5) * 0.02,
+          (Math.random() - 0.5) * 0.02,
+          (Math.random() - 0.5) * 0.02
+        ),
+        rotationSpeed: (Math.random() - 0.5) * 0.1
+      };
+
+      scene.add(heart);
+      heartParticles.push(heart);
+    }
+
+    // Create magical rings
+    const ringGeometry = new THREE.TorusGeometry(2, 0.05, 16, 100);
+    const rings = [];
+
+    for (let i = 0; i < 5; i++) {
+      const ringMaterial = new THREE.MeshPhongMaterial({
+        color: new THREE.Color().setHSL(i * 0.2, 1, 0.5),
+        emissive: new THREE.Color().setHSL(i * 0.2, 1, 0.3),
+        transparent: true,
+        opacity: 0.6
+      });
+
+      const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+      ring.position.z = -2;
+      ring.rotation.x = Math.PI / 2;
+      ring.userData = { offset: i * Math.PI * 0.4 };
+      scene.add(ring);
+      rings.push(ring);
+    }
+
+    // Create stars
+    const starGeometry = new THREE.OctahedronGeometry(0.08, 0);
+    const stars = [];
+
+    for (let i = 0; i < 100; i++) {
+      const starMaterial = new THREE.MeshPhongMaterial({
+        color: 0xffffff,
+        emissive: 0xffff88,
+        transparent: true,
+        opacity: 0.9
+      });
+
+      const star = new THREE.Mesh(starGeometry, starMaterial);
+      star.position.set(
+        (Math.random() - 0.5) * 15,
+        (Math.random() - 0.5) * 15,
+        (Math.random() - 0.5) * 10
+      );
+
+      star.userData = {
+        rotationSpeed: Math.random() * 0.1 + 0.05,
+        pulseSpeed: Math.random() * 0.05 + 0.02,
+        pulseOffset: Math.random() * Math.PI * 2
+      };
+
+      scene.add(star);
+      stars.push(star);
+    }
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    const pointLight1 = new THREE.PointLight(0xff69b4, 2, 100);
+    pointLight1.position.set(5, 5, 5);
+    scene.add(pointLight1);
+
+    const pointLight2 = new THREE.PointLight(0xda70d6, 2, 100);
+    pointLight2.position.set(-5, -5, 5);
+    scene.add(pointLight2);
+
+    // Animation loop
+    let animationId;
+    const animate = () => {
+      animationId = requestAnimationFrame(animate);
+
+      const time = Date.now() * 0.001;
+
+      // Animate heart particles
+      heartParticles.forEach(heart => {
+        heart.position.add(heart.userData.velocity);
+        heart.rotation.x += heart.userData.rotationSpeed;
+        heart.rotation.y += heart.userData.rotationSpeed * 0.7;
+
+        // Boundary check and bounce
+        ['x', 'y', 'z'].forEach(axis => {
+          if (Math.abs(heart.position[axis]) > 5) {
+            heart.userData.velocity[axis] *= -1;
+          }
+        });
+
+        // Pulse effect
+        const scale = 1 + Math.sin(time * 3 + heart.position.x) * 0.3;
+        heart.scale.set(scale, scale, scale);
+      });
+
+      // Animate rings
+      rings.forEach(ring => {
+        ring.rotation.z = time * 0.5 + ring.userData.offset;
+        ring.position.y = Math.sin(time + ring.userData.offset) * 0.5;
+        const scale = 1 + Math.sin(time * 2 + ring.userData.offset) * 0.2;
+        ring.scale.set(scale, scale, scale);
+      });
+
+      // Animate stars
+      stars.forEach(star => {
+        star.rotation.x += star.userData.rotationSpeed;
+        star.rotation.y += star.userData.rotationSpeed * 0.7;
+
+        const pulse = 1 + Math.sin(time * star.userData.pulseSpeed + star.userData.pulseOffset) * 0.5;
+        star.scale.set(pulse, pulse, pulse);
+      });
+
+      // Animate lights
+      pointLight1.position.x = Math.sin(time * 0.7) * 5;
+      pointLight1.position.y = Math.cos(time * 0.5) * 5;
+
+      pointLight2.position.x = Math.cos(time * 0.6) * 5;
+      pointLight2.position.y = Math.sin(time * 0.4) * 5;
+
+      renderer.render(scene, camera);
+    };
+
+    animate();
+
+    // Handle resize
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+
+    window.addEventListener('resize', handleResize);
+
     // Create sparkle rain
     const createSparkleRain = () => {
       const newSparkles = Array.from({ length: 8 }, (_, i) => ({
@@ -276,15 +464,18 @@ function BirthdayCelebration({ onClose }) {
     // Start intervals
     createSparkleRain();
     createBalloons();
-    
+
     const sparkleInterval = setInterval(createSparkleRain, 1500);
     const balloonInterval = setInterval(createBalloons, 3000);
 
     return () => {
       clearInterval(sparkleInterval);
       clearInterval(balloonInterval);
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationId);
+      renderer.dispose();
     };
-  }, []);
+  }, [onComplete]);
 
   return (
     <AnimatePresence>
@@ -294,15 +485,17 @@ function BirthdayCelebration({ onClose }) {
         exit={{ opacity: 0 }}
         transition={{ duration: 1 }}
       >
-        <Confetti 
+        <Canvas3D ref={canvasRef} />
+
+        <Confetti
           width={window.innerWidth}
           height={window.innerHeight}
-          numberOfPieces={300}
+          numberOfPieces={400}
           recycle={true}
           colors={['#ff69b4', '#ff1493', '#ffc0cb', '#ffb6c1', '#dda0dd', '#da70d6']}
-          gravity={0.1}
+          gravity={0.08}
         />
-        
+
         <MagicalBackground>
           {sparkleRaindrops.map(sparkle => (
             <SparkleRain
@@ -315,7 +508,7 @@ function BirthdayCelebration({ onClose }) {
               {sparkle.emoji}
             </SparkleRain>
           ))}
-          
+
           {floatingBalloons.map(balloon => (
             <FloatingBalloon
               key={balloon.id}
@@ -327,7 +520,7 @@ function BirthdayCelebration({ onClose }) {
               {balloon.emoji}
             </FloatingBalloon>
           ))}
-          
+
           {hearts.map(heart => (
             <HeartExplosion
               key={heart.id}
@@ -340,7 +533,7 @@ function BirthdayCelebration({ onClose }) {
               💖
             </HeartExplosion>
           ))}
-          
+
           {floatingElements.map(element => (
             <FloatingElement
               key={element.id}
@@ -353,7 +546,7 @@ function BirthdayCelebration({ onClose }) {
               {element.emoji}
             </FloatingElement>
           ))}
-          
+
           {bouncingElements.map(element => (
             <BouncingElement
               key={element.id}
@@ -366,69 +559,96 @@ function BirthdayCelebration({ onClose }) {
               {element.emoji}
             </BouncingElement>
           ))}
-          
+
           {magicWands.map(wand => (
             <MagicWand
               key={wand.id}
               left={wand.left}
               top={wand.top}
               initial={{ scale: 0, rotate: 0 }}
-              animate={{ 
-                scale: [0, 1.2, 1], 
+              animate={{
+                scale: [0, 1.2, 1],
                 rotate: [0, 360, 720],
                 y: [0, -20, 0]
               }}
-              transition={{ 
-                duration: 3, 
-                repeat: Infinity, 
-                delay: wand.id * 0.5 
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                delay: wand.id * 0.5
               }}
             >
               🪄
             </MagicWand>
           ))}
         </MagicalBackground>
-        
+
         <BirthdayCake
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ 
-            delay: 0.5, 
-            type: "spring", 
-            stiffness: 200,
-            duration: 2
+          initial={{ scale: 0, rotate: -180, y: -100 }}
+          animate={{
+            scale: [0, 1.3, 0.9, 1.1, 1],
+            rotate: [0, 360, 720],
+            y: [0, -30, 0, -15, 0]
+          }}
+          transition={{
+            delay: 0.5,
+            type: "spring",
+            stiffness: 150,
+            duration: 3,
+            times: [0, 0.3, 0.6, 0.8, 1]
           }}
         >
           🎂
         </BirthdayCake>
-        
+
         <CelebrationText
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.5, duration: 1.5 }}
+          initial={{ opacity: 0, y: 100, scale: 0.5, rotateX: -90 }}
+          animate={{
+            opacity: 1,
+            y: [0, -20, 0],
+            scale: [1, 1.05, 1],
+            rotateX: 0
+          }}
+          transition={{
+            delay: 1.5,
+            duration: 2,
+            times: [0, 0.5, 1],
+            ease: "easeOut"
+          }}
         >
           Happy Birthday Aiman! 🎉
         </CelebrationText>
-        
+
         <CelebrationMessage
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 2.5, duration: 1.2 }}
+          initial={{ opacity: 0, scale: 0.5, rotateY: 90 }}
+          animate={{
+            opacity: 1,
+            scale: [1, 1.03, 1],
+            rotateY: 0
+          }}
+          transition={{
+            delay: 2.5,
+            duration: 1.8,
+            times: [0, 0.6, 1],
+            ease: "easeOut"
+          }}
         >
-          Today is all about celebrating the most amazing, beautiful, and wonderful person I know! 
-          You light up every room you enter and make the world a more magical place! 💖✨🦄
+          Today is all about celebrating the most amazing, beautiful, and wonderful person I know! aap ho tou sab kuch hai aapke baghair meri duniya is black and white you are the color to it 💖✨🦄
         </CelebrationMessage>
 
-        <CloseButton
+        <NavigationButtons
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 4, duration: 1 }}
-          onClick={onClose}
-          whileHover={{ scale: 1.1, rotate: 5 }}
-          whileTap={{ scale: 0.95 }}
         >
-          Explore Birthday Surprises! 🎁✨
-        </CloseButton>
+          <NavButton
+            onClick={onComplete}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            style={{ marginRight: '1rem' }}
+          >
+            📸 View Gallery
+          </NavButton>
+        </NavigationButtons>
       </CelebrationContainer>
     </AnimatePresence>
   );

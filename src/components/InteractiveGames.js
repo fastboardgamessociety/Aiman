@@ -151,6 +151,66 @@ const MessageDisplay = styled(motion.div)`
   color: #333;
 `;
 
+const RewardModal = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+`;
+
+const RewardCard = styled(motion.div)`
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+  border-radius: 25px;
+  padding: 3rem;
+  text-align: center;
+  max-width: 500px;
+  margin: 20px;
+  box-shadow: 0 20px 60px rgba(255, 105, 180, 0.4);
+`;
+
+const RewardTitle = styled.h2`
+  font-family: 'Dancing Script', cursive;
+  font-size: 2.5rem;
+  color: white;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+`;
+
+const RewardEmoji = styled.div`
+  font-size: 4rem;
+  margin: 1rem 0;
+`;
+
+const RewardMessage = styled.p`
+  font-size: 1.2rem;
+  color: white;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+`;
+
+const CloseRewardButton = styled(motion.button)`
+  background: linear-gradient(45deg, #ff69b4, #ff1493);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  font-weight: 600;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 105, 180, 0.4);
+  }
+`;
+
 function InteractiveGames() {
   const [activeGame, setActiveGame] = useState('hearts');
   const [heartScore, setHeartScore] = useState(0);
@@ -159,6 +219,82 @@ function InteractiveGames() {
   const [flippedCards, setFlippedCards] = useState([]);
   const [matchedPairs, setMatchedPairs] = useState(new Set());
   const [currentMessage, setCurrentMessage] = useState('');
+  const [showReward, setShowReward] = useState(null);
+  const [completedGames, setCompletedGames] = useState(new Set());
+  const [quizScore, setQuizScore] = useState(0);
+  const [currentQuizQuestion, setCurrentQuizQuestion] = useState(0);
+  const [quizAnswered, setQuizAnswered] = useState(false);
+
+  const gameRewards = {
+    hearts: {
+      emoji: '🤗',
+      title: 'Virtual Hug Reward!',
+      message: 'Here\'s the biggest, warmest hug just for you! You collected all my hearts perfectly. I wish I could give you this hug in person right now! *HUGE HUG*,iiii aur itna dabana tha jaise waise dabata jab hugg hehe  🤗💕 '
+    },
+    memory: {
+      emoji: '💋',
+      title: 'Sweet Kiss Reward!',
+      message: 'You have such an amazing memory! Here\'s a sweet kiss all over you liek i usually do as your reward for matching all the pairs perfectly. *Kiss* 💋 You\'re absolutely brilliant jaanuu!'
+    },
+    quiz: {
+      emoji: '🎁',
+      title: 'Special Gift Reward!',
+      message: 'You know me so well! Here\'s a special virtual gift just for you: A promise that when we\'re together again, I\'ll give you the most amazing surprise. You deserve the world! 🎁💝'
+    }
+  };
+
+  const quizQuestions = [
+    {
+      question: "What's my favorite thing about you?",
+      options: ["Your smile", "Your laugh", "Your hair", "Everything about you"],
+      correct: 3
+    },
+    {
+      question: "What do I love most about our conversations?",
+      options: ["kinni bongiyan maarti", "How funny you are", "How caring you are", "All of the above"],
+      correct: 0
+    },
+    {
+      question: "What makes you special to me?",
+      options: ["Your beauty", "Your heart", "Your mind", "You areee soooo perfect jsut as you aree"],
+      correct: 3
+    },
+    {
+      question: "How do you make me feel?",
+      options: ["Happy", "Loved", "Complete", "All of these and more"],
+      correct: 3
+    },
+    {
+      question: "What's the best part of my day?",
+      options: ["Morning coffee", "Work achievements", "Thinking about you", "Going to sleep"],
+      correct: 2
+    },
+    {
+      question: "If I could give you anything, what would it be?",
+      options: ["Expensive gifts", "The whole world", "All my love", "My time and attention"],
+      correct: 1
+    },
+    {
+      question: "What do I admire most about you?",
+      options: ["Your strength", "Your compassion", "Your intelligence", "you"],
+      correct: 3
+    },
+    {
+      question: "How do you inspire me?",
+      options: ["To be better", "To dream bigger", "To love deeper", "In every possible way"],
+      correct: 2
+    },
+    {
+      question: "What's my promise to you?",
+      options: ["To always be there", "To love you forever", "To make you happy", "All of these always"],
+      correct: 1
+    },
+    {
+      question: "What are you to me?",
+      options: ["My girlfriend", "My best friend", "My everything", "The love of my life"],
+      correct: 2
+    }
+  ];
 
   const loveMessages = [
     "You make every day brighter just by being you! ✨",
@@ -183,7 +319,16 @@ function InteractiveGames() {
   const collectHeart = (index) => {
     if (!collectedHearts.has(index)) {
       setCollectedHearts(prev => new Set([...prev, index]));
-      setHeartScore(prev => prev + 1);
+      setHeartScore(prev => {
+        const newScore = prev + 1;
+        if (newScore === 16 && !completedGames.has('hearts')) {
+          setTimeout(() => {
+            setShowReward('hearts');
+            setCompletedGames(prev => new Set([...prev, 'hearts']));
+          }, 1000);
+        }
+        return newScore;
+      });
     }
   };
 
@@ -196,7 +341,15 @@ function InteractiveGames() {
     if (newFlipped.length === 2) {
       const [first, second] = newFlipped;
       if (memoryCards[first].emoji === memoryCards[second].emoji) {
-        setMatchedPairs(prev => new Set([...prev, first, second]));
+        const newMatched = new Set([...matchedPairs, first, second]);
+        setMatchedPairs(newMatched);
+        
+        if (newMatched.size === 16 && !completedGames.has('memory')) {
+          setTimeout(() => {
+            setShowReward('memory');
+            setCompletedGames(prev => new Set([...prev, 'memory']));
+          }, 1000);
+        }
       }
       setTimeout(() => setFlippedCards([]), 1000);
     }
@@ -205,6 +358,29 @@ function InteractiveGames() {
   const getRandomMessage = () => {
     const randomMessage = loveMessages[Math.floor(Math.random() * loveMessages.length)];
     setCurrentMessage(randomMessage);
+  };
+
+  const closeReward = () => {
+    setShowReward(null);
+  };
+
+  const answerQuiz = (answerIndex) => {
+    if (quizAnswered) return;
+    
+    setQuizAnswered(true);
+    if (answerIndex === quizQuestions[currentQuizQuestion].correct) {
+      setQuizScore(prev => prev + 1);
+    }
+    
+    setTimeout(() => {
+      if (currentQuizQuestion < quizQuestions.length - 1) {
+        setCurrentQuizQuestion(prev => prev + 1);
+        setQuizAnswered(false);
+      } else if (!completedGames.has('quiz')) {
+        setShowReward('quiz');
+        setCompletedGames(prev => new Set([...prev, 'quiz']));
+      }
+    }, 1500);
   };
 
   const renderGame = () => {
@@ -316,6 +492,56 @@ function InteractiveGames() {
           </GameContainer>
         );
       
+      case 'quiz':
+        return (
+          <GameContainer
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <GameTitle>Love Quiz! 🧩</GameTitle>
+            <GameDescription>
+              Let's see how well you know my feelings about you!
+            </GameDescription>
+            <Score>Score: {quizScore}/{quizQuestions.length}</Score>
+            
+            {currentQuizQuestion < quizQuestions.length ? (
+              <div>
+                <h4 style={{ color: '#ff6b6b', margin: '2rem 0 1rem' }}>
+                  {quizQuestions[currentQuizQuestion].question}
+                </h4>
+                <div style={{ display: 'grid', gap: '1rem', margin: '2rem 0' }}>
+                  {quizQuestions[currentQuizQuestion].options.map((option, index) => (
+                    <MessageButton
+                      key={index}
+                      onClick={() => answerQuiz(index)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      style={{ 
+                        background: quizAnswered 
+                          ? (index === quizQuestions[currentQuizQuestion].correct 
+                              ? 'linear-gradient(135deg, #00b894, #00cec9)' 
+                              : 'linear-gradient(135deg, #ff6b6b, #ff8e8e)')
+                          : 'linear-gradient(135deg, #ff6b6b, #ff8e8e)'
+                      }}
+                    >
+                      {option}
+                    </MessageButton>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                style={{ color: '#ff6b6b', fontSize: '1.2rem', fontWeight: 'bold' }}
+              >
+                🎉 Quiz Complete! You got {quizScore}/{quizQuestions.length} right! 🎉
+              </motion.div>
+            )}
+          </GameContainer>
+        );
+      
       default:
         return null;
     }
@@ -350,11 +576,42 @@ function InteractiveGames() {
         >
           💌 Love Messages
         </GameButton>
+        <GameButton 
+          active={activeGame === 'quiz'} 
+          onClick={() => setActiveGame('quiz')}
+        >
+          🧩 Love Quiz
+        </GameButton>
       </GameSelector>
       
       <AnimatePresence mode="wait">
         {renderGame()}
       </AnimatePresence>
+
+      {showReward && (
+        <RewardModal
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <RewardCard
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 200 }}
+          >
+            <RewardTitle>{gameRewards[showReward].title}</RewardTitle>
+            <RewardEmoji>{gameRewards[showReward].emoji}</RewardEmoji>
+            <RewardMessage>{gameRewards[showReward].message}</RewardMessage>
+            <CloseRewardButton
+              onClick={closeReward}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Thank You! 💕
+            </CloseRewardButton>
+          </RewardCard>
+        </RewardModal>
+      )}
     </GamesContainer>
   );
 }

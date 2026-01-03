@@ -1,225 +1,254 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { motion, AnimatePresence } from 'framer-motion';
-import TestNewYearCountdown from './TestNewYearCountdown';
-import TestBirthdayCountdown from './TestBirthdayCountdown';
+import { motion } from 'framer-motion';
+import BirthdayCountdown from './BirthdayCountdown';
+import BirthdayCelebration from './BirthdayCelebration';
 import BirthdayGallery from './BirthdayGallery';
 import InteractiveGames from './InteractiveGames';
-import NewYearCelebration from './NewYearCelebration';
-import BirthdayCelebration from './BirthdayCelebration';
 
 const TestContainer = styled.div`
   min-height: 100vh;
-  position: relative;
-  background: #000;
-`;
-
-const TestNavigation = styled.div`
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.95);
-  backdrop-filter: blur(15px);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px;
-  border-radius: 15px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  max-height: 90vh;
-  overflow-y: auto;
 `;
 
-const TestButton = styled.button`
-  background: ${props => props.active ? '#ff6b6b' : 'rgba(255, 255, 255, 0.1)'};
+const TestHeader = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(10px);
+  padding: 15px 20px;
+  z-index: 1000;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+`;
+
+const TestButton = styled(motion.button)`
+  background: ${props => props.active ? 'linear-gradient(45deg, #ff6b6b, #ff8e8e)' : 'rgba(255, 255, 255, 0.2)'};
   color: white;
   border: none;
-  padding: 12px 16px;
-  border-radius: 10px;
+  padding: 10px 20px;
+  border-radius: 20px;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 200px;
-  text-align: left;
-  border: 1px solid ${props => props.active ? '#ff6b6b' : 'rgba(255, 255, 255, 0.2)'};
-  
-  &:hover {
-    background: ${props => props.active ? '#ff5252' : 'rgba(255, 255, 255, 0.2)'};
-    transform: translateX(2px);
-  }
-`;
-
-const CelebrationButton = styled.button`
-  background: linear-gradient(45deg, #ffd700, #ffed4e);
-  color: #333;
-  border: none;
-  padding: 12px 16px;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 200px;
   font-weight: 600;
-  text-align: left;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   
   &:hover {
-    background: linear-gradient(45deg, #ffed4e, #ffd700);
-    transform: translateX(2px);
-  }
-`;
-
-const TestTitle = styled.h3`
-  color: white;
-  margin: 0 0 15px 0;
-  font-size: 1.2rem;
-  text-align: center;
-  font-family: 'Dancing Script', cursive;
-`;
-
-const SectionTitle = styled.h4`
-  color: #ffd700;
-  margin: 15px 0 8px 0;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-`;
-
-const CloseTestMode = styled.button`
-  background: #ff4757;
-  color: white;
-  border: none;
-  padding: 12px 16px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  margin-top: 15px;
-  font-weight: 600;
-  
-  &:hover {
-    background: #ff3742;
-    transform: translateX(2px);
+    background: ${props => props.active ? 'linear-gradient(45deg, #ff8e8e, #ff6b6b)' : 'rgba(255, 255, 255, 0.3)'};
+    transform: translateY(-2px);
   }
 `;
 
 const ContentArea = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
+  margin-top: 80px;
 `;
 
-function TestMode({ onClose }) {
-  const [currentPage, setCurrentPage] = useState('newYearCountdown');
-  const [showCelebration, setShowCelebration] = useState(null);
+const RewardModal = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+`;
 
-  const renderCurrentPage = () => {
-    if (showCelebration === 'newYear') {
-      return <NewYearCelebration onClose={() => setShowCelebration(null)} />;
-    }
-    
-    if (showCelebration === 'birthday') {
-      return <BirthdayCelebration onClose={() => setShowCelebration(null)} />;
-    }
+const RewardCard = styled(motion.div)`
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+  border-radius: 25px;
+  padding: 3rem;
+  text-align: center;
+  max-width: 500px;
+  margin: 20px;
+  box-shadow: 0 20px 60px rgba(255, 105, 180, 0.4);
+`;
 
-    switch (currentPage) {
-      case 'newYearCountdown':
-        return <TestNewYearCountdown onCelebrate={() => setShowCelebration('newYear')} />;
-      case 'birthdayCountdown':
-        return <TestBirthdayCountdown onCelebrate={() => setShowCelebration('birthday')} />;
-      case 'birthdayGallery':
-        return <BirthdayGallery />;
+const RewardTitle = styled.h2`
+  font-family: 'Dancing Script', cursive;
+  font-size: 2.5rem;
+  color: white;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+`;
+
+const RewardEmoji = styled.div`
+  font-size: 4rem;
+  margin: 1rem 0;
+`;
+
+const RewardMessage = styled.p`
+  font-size: 1.2rem;
+  color: white;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+`;
+
+const CloseRewardButton = styled(motion.button)`
+  background: linear-gradient(45deg, #ff69b4, #ff1493);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  font-weight: 600;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 105, 180, 0.4);
+  }
+`;
+
+const gameRewards = {
+  hearts: {
+    emoji: '🤗',
+    title: 'Virtual Hug Reward!',
+    message: 'Here\'s the biggest, warmest hug just for you! You completed the heart collector game perfectly. I wish I could give you this hug in person right now! *HUGE HUG* 🤗💕'
+  },
+  memory: {
+    emoji: '💋',
+    title: 'Sweet Kiss Reward!',
+    message: 'You have such an amazing memory! Here\'s a sweet kiss as your reward for matching all the pairs perfectly. *Kiss* 💋 You\'re absolutely brilliant!'
+  },
+  quiz: {
+    emoji: '🎁',
+    title: 'Special Gift Reward!',
+    message: 'You know me so well! Here\'s a special virtual gift just for you: A promise that when we\'re together again, I\'ll give you the most amazing surprise. You deserve the world! 🎁💝'
+  }
+};
+
+function TestMode() {
+  const [currentView, setCurrentView] = useState('countdown');
+  const [showReward, setShowReward] = useState(null);
+
+  const handleRewardShow = (gameType) => {
+    setShowReward(gameType);
+  };
+
+  const closeReward = () => {
+    setShowReward(null);
+  };
+
+  const renderCurrentView = () => {
+    switch (currentView) {
+      case 'countdown':
+        return <BirthdayCountdown onComplete={() => setCurrentView('celebration')} />;
+      case 'celebration':
+        return <BirthdayCelebration onComplete={() => setCurrentView('gallery')} />;
+      case 'gallery':
+        return <BirthdayGallery onComplete={() => setCurrentView('games')} />;
       case 'games':
-        return <InteractiveGames />;
+        return <InteractiveGames onComplete={() => console.log('Games complete!')} />;
       default:
-        return <TestNewYearCountdown onCelebrate={() => setShowCelebration('newYear')} />;
+        return <BirthdayCountdown onComplete={() => setCurrentView('celebration')} />;
     }
   };
 
   return (
     <TestContainer>
-      <TestNavigation>
-        <TestTitle>🧪 Complete Test Mode</TestTitle>
-        
-        <SectionTitle>📄 Countdown Pages</SectionTitle>
-        
-        <TestButton 
-          active={currentPage === 'newYearCountdown'} 
-          onClick={() => {
-            setCurrentPage('newYearCountdown');
-            setShowCelebration(null);
-          }}
-        >
-          🎊 New Year Countdown
-        </TestButton>
-        
-        <TestButton 
-          active={currentPage === 'birthdayCountdown'} 
-          onClick={() => {
-            setCurrentPage('birthdayCountdown');
-            setShowCelebration(null);
-          }}
+      <TestHeader>
+        <TestButton
+          active={currentView === 'countdown'}
+          onClick={() => setCurrentView('countdown')}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
           🎂 Birthday Countdown
         </TestButton>
         
-        <SectionTitle>💕 Birthday Content</SectionTitle>
-        
-        <TestButton 
-          active={currentPage === 'birthdayGallery'} 
-          onClick={() => {
-            setCurrentPage('birthdayGallery');
-            setShowCelebration(null);
-          }}
+        <TestButton
+          active={currentView === 'celebration'}
+          onClick={() => setCurrentView('celebration')}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          💕 Birthday Gallery
+          🎉 Birthday Celebration
         </TestButton>
         
-        <TestButton 
-          active={currentPage === 'games'} 
-          onClick={() => {
-            setCurrentPage('games');
-            setShowCelebration(null);
-          }}
+        <TestButton
+          active={currentView === 'gallery'}
+          onClick={() => setCurrentView('gallery')}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          📸 Birthday Gallery
+        </TestButton>
+        
+        <TestButton
+          active={currentView === 'games'}
+          onClick={() => setCurrentView('games')}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
           🎮 Interactive Games
         </TestButton>
         
-        <SectionTitle>🎉 Epic Celebrations</SectionTitle>
+        <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.2)', margin: '5px 0' }} />
         
-        <CelebrationButton 
-          onClick={() => setShowCelebration('newYear')}
+        <TestButton
+          onClick={() => handleRewardShow('hearts')}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          ✨ EPIC New Year Show
-        </CelebrationButton>
+          🤗 Heart Collector Reward
+        </TestButton>
         
-        <CelebrationButton 
-          onClick={() => setShowCelebration('birthday')}
+        <TestButton
+          onClick={() => handleRewardShow('memory')}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          🎂 AMAZING Birthday Magic
-        </CelebrationButton>
+          💋 Memory Game Reward
+        </TestButton>
         
-        <CloseTestMode onClick={onClose}>
-          ❌ Exit Test Mode
-        </CloseTestMode>
-      </TestNavigation>
-      
+        <TestButton
+          onClick={() => handleRewardShow('quiz')}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          🎁 Quiz Reward
+        </TestButton>
+      </TestHeader>
+
       <ContentArea>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentPage + (showCelebration || '')}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {renderCurrentPage()}
-          </motion.div>
-        </AnimatePresence>
+        {renderCurrentView()}
       </ContentArea>
+
+      {showReward && (
+        <RewardModal
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <RewardCard
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 200 }}
+          >
+            <RewardTitle>{gameRewards[showReward].title}</RewardTitle>
+            <RewardEmoji>{gameRewards[showReward].emoji}</RewardEmoji>
+            <RewardMessage>{gameRewards[showReward].message}</RewardMessage>
+            <CloseRewardButton
+              onClick={closeReward}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Thank You! 💕
+            </CloseRewardButton>
+          </RewardCard>
+        </RewardModal>
+      )}
     </TestContainer>
   );
 }
